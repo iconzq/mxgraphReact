@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
 import PropTypes from "prop-types";
 import ReactDOM from "react-dom";
 import CreateTaskNode from "./component/CreateTaskNode";
@@ -81,12 +81,10 @@ class JsonCodec extends mxObjectCodec {
     }
 
     decode(model) {
-        return Object.keys(model.cells)
-            .map(iCell => {
-                const currentCell = model.getCell(iCell);
-                return currentCell.value !== undefined ? currentCell : null;
-            })
-            .filter(item => item !== null);
+        return Object.keys(model.cells).map(iCell => {
+            const currentCell = model.getCell(iCell);
+            return currentCell.value !== undefined ? currentCell : null;
+        }).filter(item => item !== null);
     }
 }
 
@@ -116,8 +114,7 @@ class mxGraphGridAreaEditor extends Component {
         const parent = graph.getDefaultParent();
         graph.getModel().beginUpdate(); // Adds cells to the model in a single step
         try {
-            dataModel &&
-            dataModel.graph.map(node => {
+            dataModel && dataModel.graph.map(node => {
                 if (node.value) {
                     if (typeof node.value === "object") {
                         const xmlNode = jsonEncoder.encode(node.value);
@@ -202,16 +199,16 @@ class mxGraphGridAreaEditor extends Component {
         graph.addCellOverlay(cell, overlay);
     };
     handleCancel = () => {
-        this.setState({createVisile: false});
+        this.setState({ createVisile: false });
         this.state.graph.removeCells([this.state.currentNode]);
     };
     handleConfirm = fields => {
-        const {graph} = this.state;
+        const { graph } = this.state;
         const cell = graph.getSelectionCell();
         this.applyHandler(graph, cell, "text", fields.taskName);
         this.applyHandler(graph, cell, "desc", fields.taskDesc);
         cell.setId(fields.id || 100);
-        this.setState({createVisile: false});
+        this.setState({ createVisile: false });
     };
     applyHandler = (graph, cell, name, newValue) => {
         graph.getModel().beginUpdate();
@@ -225,7 +222,7 @@ class mxGraphGridAreaEditor extends Component {
         }
     };
     graphF = evt => {
-        const {graph} = this.state;
+        const { graph } = this.state;
         var x = mxEvent.getClientX(evt);
         var y = mxEvent.getClientY(evt);
         var elt = document.elementFromPoint(x, y);
@@ -257,7 +254,7 @@ class mxGraphGridAreaEditor extends Component {
         return dragElt;
     };
     createDragElement = () => {
-        const {graph} = this.state;
+        const { graph } = this.state;
         // 获取左侧左右的 li
         const tasksDrag = ReactDOM.findDOMNode(this.refs.mxSidebar).querySelectorAll(".task");
         // 遍历 li
@@ -265,15 +262,16 @@ class mxGraphGridAreaEditor extends Component {
             // 获取每个 li 的属性
             const value = ele.getAttribute("data-value");
             let ds = mxUtils.makeDraggable(
-                ele,
-                this.graphF,
-                (graph, evt, target, x, y) =>
-                    this.funct(graph, evt, target, x, y, value),
-                this.dragElt,
-                null,
-                null,
-                graph.autoscroll,
-                true
+                ele, // 要被拖动的DOM元素 
+                this.graphF, // 一个mxGraph对象，作为drop到的目标或者接受鼠标事件并返回当前mxGraph的一个函数。
+                (graph, evt, target, x, y) => this.funct(graph, evt, target, x, y, value), // 拖动成功之后执行的方法
+                this.dragElt, // 可选的DOM节点用于拖动预览
+                null, // 可选，光标和拖动预览框之间的水平偏移量
+                null, // 可选，光标和拖动预览框之间的垂直偏移量
+                graph.autoscroll, // 可选的布尔值，指定是否使用autoscroll，默认是mxGraph.autoscroll(默认是true,即从拖动面板拖动图元到graph区域的边界时，会进行方向上的移动，类似滚动条效果)
+                true // 可选的布尔值，指定预览元素是否应该根据图形缩放比例进行缩放。如果为true，那么偏移量也会被缩放。默认为false
+                // highlightDropTargets,  // 可选的布尔值，指定drop target是否应该高亮显示，默认为true
+                // getDropTarget // 可选的函数，用于返回drop target的给定位置（x,y），默认是mxGraph.getCellAt
             );
             ds.isGuidesEnabled = function () {
                 return graph.graphHandler.guidesEnabled;
@@ -309,7 +307,7 @@ class mxGraphGridAreaEditor extends Component {
         }
     };
     setGraphSetting = () => {
-        const {graph} = this.state;
+        const { graph } = this.state;
         const that = this;
         graph.gridSize = 30;
         graph.setPanning(true);
@@ -323,6 +321,14 @@ class mxGraphGridAreaEditor extends Component {
         graph.centerZoom = true;
         // Autosize labels on insert where autosize=1
         graph.autoSizeCellsOnAdd = true;
+
+        /*禁用节点双击，防止改变数据 */
+        graph.dblClick = function (evt, cell) {
+            var model = graph.getModel();
+            if (model.isVertex(cell)) {
+                return false;
+            }
+        };
 
         const keyHandler = new mxKeyHandler(graph);
         keyHandler.bindKey(46, function (evt) {
@@ -437,7 +443,7 @@ class mxGraphGridAreaEditor extends Component {
         // console.log(sender)
     };
     settingConnection = () => {
-        const {graph} = this.state;
+        const { graph } = this.state;
         mxConstraintHandler.prototype.intersects = function (
             icon,
             point,
@@ -447,9 +453,8 @@ class mxGraphGridAreaEditor extends Component {
             return !source || existingEdge || mxUtils.intersects(icon.bounds, point);
         };
 
-        var mxConnectionHandlerUpdateEdgeState =
-            mxConnectionHandler.prototype.updateEdgeState;
-        mxConnectionHandler.prototype.updateEdgeState = function (pt, constraint) {
+        var mxConnectionHandlerUpdateEdgeState = mxConnectionHandler.prototype.updateEdgeState;
+        mxConnectionHandlerUpdateEdgeState = function (pt, constraint) {
             if (pt != null && this.previous != null) {
                 var constraints = this.graph.getAllConnectionConstraints(this.previous);
                 var nearestConstraint = null;
@@ -459,8 +464,7 @@ class mxGraphGridAreaEditor extends Component {
                     var cp = this.graph.getConnectionPoint(this.previous, constraints[i]);
 
                     if (cp != null) {
-                        var tmp =
-                            (cp.x - pt.x) * (cp.x - pt.x) + (cp.y - pt.y) * (cp.y - pt.y);
+                        var tmp = (cp.x - pt.x) * (cp.x - pt.x) + (cp.y - pt.y) * (cp.y - pt.y);
 
                         if (dist == null || tmp < dist) {
                             nearestConstraint = constraints[i];
@@ -524,7 +528,7 @@ class mxGraphGridAreaEditor extends Component {
     };
     initToolbar = () => {
         const that = this;
-        const {graph, layout} = this.state;
+        const { graph, layout } = this.state;
         // 放大按钮
         var toolbar = ReactDOM.findDOMNode(this.refs.toolbar);
         toolbar.appendChild(
@@ -542,9 +546,9 @@ class mxGraphGridAreaEditor extends Component {
         toolbar.appendChild(
             mxUtils.button("restore", function (evt) {
                 graph.zoomActual();
-                const zoom = {zoomFactor: 1.2};
+                const zoom = { zoomFactor: 1.2 };
                 that.setState({
-                    graph: {...graph, ...zoom}
+                    graph: { ...graph, ...zoom }
                 });
             })
         );
@@ -607,56 +611,56 @@ class mxGraphGridAreaEditor extends Component {
 
     LoadGraph(data) {
         var container = ReactDOM.findDOMNode(this.refs.divGraph);
-        // Checks if the browser is supported
+        // Checks if the browser is
+        // 浏览器是否支持
         if (!mxClient.isBrowserSupported()) {
             // Displays an error message if the browser is not supported.
-            mxUtils.error("Browser is not supported!", 200, false);
+            // mxUtils.error("Browser is not supported!", 200, false);
+            mxUtils.error("您的浏览器不支持此绘制工具，请更换最新版浏览器", 200, false);
         } else {
+            // 新建一个mxgraph中的graph示例，graph可以理解为我们绘制图形的实例对象
             var graph = new mxGraph(container);
-            this.setState(
-                {
-                    graph: graph,
-                    dragElt: this.getEditPreview()
-                },
-                () => {
-                    console.log(this);
-                    // layout
-                    const layout = new mxCompactTreeLayout(graph, false);
-                    this.setState({layout});
-                    this.setLayoutSetting(layout);
-                    this.loadGlobalSetting();
-                    this.setGraphSetting();
-                    this.initToolbar();
-                    this.settingConnection();
-                    this.createDragElement();
-                    var parent = graph.getDefaultParent();
+            this.setState({
+                graph: graph,
+                dragElt: this.getEditPreview()
+            }, () => {
+                console.log(this);
+                // layout
+                const layout = new mxCompactTreeLayout(graph, false);
+                this.setState({ layout });
+                this.setLayoutSetting(layout);
+                this.loadGlobalSetting();
+                this.setGraphSetting();
+                this.initToolbar();
+                this.settingConnection();
+                this.createDragElement();
+                //获取当前图层之上的父图层
+                var parent = graph.getDefaultParent();
 
-                    // Adds cells to the model in a single step
-                    graph.getModel().beginUpdate();
-                    try {
-                        var v1 = graph.insertVertex(parent, null, ",", 20, 20, 80, 30);
-                        var v2 = graph.insertVertex(
-                            parent,
-                            null,
-                            "World!",
-                            200,
-                            150,
-                            80,
-                            30
-                        );
-                        var e1 = graph.insertEdge(parent, null, "", v1, v2);
-                    } finally {
-                        // Updates the display
-                        graph.getModel().endUpdate();
-                    }
+                // Adds cells to the model in a single step
+                // 每次新增图形，或者更新图形的时候必须要调用这个方法
+                graph.getModel().beginUpdate();
+
+                try {
+                    // 这条语句在图层中绘制出一个内容为'Hello'的矩形
+                    // insertVertex()函数中依次传入的是父图层，当前图元的id，图元中的内容，定位x，定位y，宽w，高h，后面还可以添加参数为当前图源的样式，是否为相对位置
+                    var v1 = graph.insertVertex(parent, null, 'hello', 20, 20, 180, 30);
+                    var v2 = graph.insertVertex(parent, null, 'world', 200, 150, 80, 30);
+                    // 这条语句使用insertEdge，在图层中绘制出一个由v1指向v2的线。
+                    // var e1 = graph.insertEdge(parent, null, '', v1, v2);
+                    // mxGraph.insertEdge（父级，id，值，源，目标，样式）
+                    graph.insertEdge(parent, null, '', v1, v2);
+                } finally {
+                    // Updates the display
+                    // 每次更新或者新增图形之后必须调用这个方法，所以这个方法需要在finally中执行
+                    graph.getModel().endUpdate();
                 }
+            }
             );
             // Disables the built-in context menu
             mxEvent.disableContextMenu(container);
             // Trigger event after selection
-            graph
-                .getSelectionModel()
-                .addListener(mxEvent.CHANGE, this.selectionChange);
+            graph.getSelectionModel().addListener(mxEvent.CHANGE, this.selectionChange);
             var parent = graph.getDefaultParent();
         }
     }
@@ -697,11 +701,11 @@ class mxGraphGridAreaEditor extends Component {
                     </li>
                     <li id="layout123">layout</li>
                 </ul>
-                <div className="toolbar" ref="toolbar"/>
+                <div className="toolbar" ref="toolbar" />
                 <div className="container-wrapper">
-                    <div className="container" ref="divGraph"/>
+                    <div className="container" ref="divGraph" />
                 </div>
-                <div className="changeInput" style={{zIndex: 10}}/>
+                <div className="changeInput" style={{ zIndex: 10 }} />
                 {this.state.createVisile && (
                     <CreateTaskNode
                         currentTask={this.state.currentTask}
